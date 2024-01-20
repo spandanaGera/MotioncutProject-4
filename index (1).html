@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        #todo-container {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 600px;
+            height: 250px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="todo-container">
+        <h1 class="text-center">To-Do List</h1>
+        <ul class="list-group" id="tasks"></ul>
+        <div class="input-group mb-3">
+            <input type="text" class="form-control" id="new-task" placeholder="Add a new task">
+            <div class="input-group-append">
+                <button class="btn btn-primary" onclick="addTask()">Add Task</button>
+            </div>
+        </div>
+        <button class="btn btn-danger" onclick="clearTasks()">Clear Completed Tasks</button>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Load tasks from localStorage
+            loadTasks();
+        });
+
+        function loadTasks() {
+            const tasksContainer = document.getElementById("tasks");
+            tasksContainer.innerHTML = "";
+
+            // Retrieve tasks from localStorage
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+            tasks.forEach(function (task) {
+                addTaskToDOM(task);
+            });
+        }
+
+        function addTask() {
+            const newTaskInput = document.getElementById("new-task");
+            const taskText = newTaskInput.value.trim();
+
+            if (taskText !== "") {
+                const task = { text: taskText, completed: false };
+
+                // Retrieve tasks from localStorage
+                const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+                tasks.push(task);
+
+                // Save tasks to localStorage
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+
+                addTaskToDOM(task);
+
+                // Clear the input field
+                newTaskInput.value = "";
+            }
+        }
+
+        function addTaskToDOM(task) {
+            const tasksContainer = document.getElementById("tasks");
+            const taskElement = document.createElement("li");
+
+            taskElement.className = "list-group-item task";
+            taskElement.innerHTML = `
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="checkbox-${tasksContainer.childElementCount}" ${task.completed ? "checked" : ""} onchange="toggleTask(this)">
+                    <label class="custom-control-label" for="checkbox-${tasksContainer.childElementCount}">${task.text}</label>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="editTask(this)">Edit</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteTask(this)">Delete</button>
+                </div>
+            `;
+
+            tasksContainer.appendChild(taskElement);
+        }
+
+        function toggleTask(checkbox) {
+            const taskText = checkbox.nextElementSibling;
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const index = Array.from(checkbox.closest("#tasks").children).indexOf(checkbox.parentElement.parentElement);
+
+            tasks[index].completed = checkbox.checked;
+
+            // Save tasks to localStorage
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+
+            if (tasks[index].completed) {
+                taskText.style.textDecoration = "line-through";
+            } else {
+                taskText.style.textDecoration = "none";
+            }
+        }
+
+        function editTask(button) {
+            const taskText = button.parentElement.previousElementSibling.firstElementChild;
+            const newText = prompt("Edit task:", taskText.innerText);
+
+            if (newText !== null) {
+                taskText.innerText = newText;
+
+                const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+                const index = Array.from(button.closest("#tasks").children).indexOf(button.parentElement.parentElement);
+
+                tasks[index].text = newText;
+
+                // Save tasks to localStorage
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+            }
+        }
+
+        function deleteTask(button) {
+            const tasksContainer = button.closest("#tasks");
+            const taskElement = button.parentElement.parentElement;
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const index = Array.from(tasksContainer.children).indexOf(taskElement);
+
+            tasks.splice(index, 1);
+
+            // Save tasks to localStorage
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+
+            tasksContainer.removeChild(taskElement);
+        }
+
+        function clearTasks() {
+            const tasksContainer = document.getElementById("tasks");
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+            // Remove completed tasks
+            const filteredTasks = tasks.filter(task => !task.completed);
+
+            // Save tasks to localStorage
+            localStorage.setItem("tasks", JSON.stringify(filteredTasks));
+
+            // Clear the tasks in the DOM
+            tasksContainer.innerHTML = "";
+
+            // Add the remaining tasks back to the DOM
+            filteredTasks.forEach(task => {
+                addTaskToDOM(task);
+            });
+        }
+    </script>
+</body>
+</html>
